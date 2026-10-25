@@ -1,0 +1,87 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "settings": {
+      ".read": true,
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || auth.token.role === 'SUPER_ADMIN')"
+    },
+
+    "leadership": {
+      ".read": true,
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || auth.token.role === 'SUPER_ADMIN' || auth.token.role === 'ADMIN')"
+    },
+
+    "branches": {
+      ".read": true,
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || auth.token.role === 'SUPER_ADMIN' || auth.token.role === 'ADMIN')"
+    },
+
+    "ministries": {
+      ".read": true,
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || auth.token.role === 'SUPER_ADMIN' || auth.token.role === 'ADMIN')"
+    },
+
+    "sermons": {
+      ".read": true,
+      ".indexOn": ["status", "category", "presbytery", "date"],
+      "$sermonId": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || (root.child('users').child(auth.uid).child('role').val() === 'EDITOR' && (!data.exists() || data.child('status').val() === 'draft')))"
+      }
+    },
+
+    "events": {
+      ".read": true,
+      ".indexOn": ["status", "startDate", "presbytery", "category"],
+      "$eventId": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || (root.child('users').child(auth.uid).child('role').val() === 'EDITOR' && (!data.exists() || data.child('status').val() === 'draft')))"
+      }
+    },
+
+    "announcements": {
+      ".read": true,
+      ".indexOn": ["status", "priority", "publishedAt"],
+      "$annId": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || (root.child('users').child(auth.uid).child('role').val() === 'EDITOR' && (!data.exists() || data.child('status').val() === 'draft')))"
+      }
+    },
+
+    "news": {
+      ".read": true,
+      ".indexOn": ["status", "publishedAt", "presbytery"],
+      "$newsId": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || (root.child('users').child(auth.uid).child('role').val() === 'EDITOR' && (!data.exists() || data.child('status').val() === 'draft')))"
+      }
+    },
+
+    "gallery": {
+      ".read": true,
+      ".indexOn": ["status", "eventDate"],
+      "$albumId": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN' || (root.child('users').child(auth.uid).child('role').val() === 'EDITOR' && (!data.exists() || data.child('status').val() === 'draft')))"
+      }
+    },
+
+    "contactMessages": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || root.child('users').child(auth.uid).child('role').val() === 'ADMIN')",
+      "$messageId": {
+        ".write": "!data.exists() && newData.hasChildren(['name', 'email', 'message'])",
+        ".validate": "newData.child('email').val().matches(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}$/i)"
+      }
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN')",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN'"
+      }
+    },
+
+    "auditLogs": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'SUPER_ADMIN' || auth.token.role === 'SUPER_ADMIN')",
+      ".write": "auth != null",
+      ".indexOn": ["timestamp", "action", "entityType"]
+    }
+  }
+}

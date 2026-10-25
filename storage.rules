@@ -1,0 +1,70 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to verify admin claims or database roles
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'SUPER_ADMIN';
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (request.auth.token.role == 'ADMIN' || request.auth.token.role == 'SUPER_ADMIN');
+    }
+
+    function isEditor() {
+      return isAuthenticated() && (request.auth.token.role == 'EDITOR' || isAdmin());
+    }
+
+    // Public readable sermon audio & video covers
+    match /sermons/{allPaths=**} {
+      allow read: if true;
+      allow write: if isEditor() &&
+        request.resource.size < 60 * 1024 * 1024 && // 60MB max
+        (request.resource.contentType.matches('audio/.*') || 
+         request.resource.contentType.matches('image/.*') || 
+         request.resource.contentType.matches('video/.*') ||
+         request.resource.contentType == 'application/pdf');
+    }
+
+    // Public readable event banners
+    match /events/{allPaths=**} {
+      allow read: if true;
+      allow write: if isEditor() &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // Public readable church gallery photographs
+    match /gallery/{allPaths=**} {
+      allow read: if true;
+      allow write: if isEditor() &&
+        request.resource.size < 15 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // Public readable news article images
+    match /news/{allPaths=**} {
+      allow read: if true;
+      allow write: if isEditor() &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // Administrative documents
+    match /documents/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() &&
+        request.resource.size < 25 * 1024 * 1024 &&
+        (request.resource.contentType == 'application/pdf' || request.resource.contentType.matches('image/.*'));
+    }
+
+    // Deny all other paths by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
